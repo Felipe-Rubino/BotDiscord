@@ -1,5 +1,6 @@
+import { AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
 import { Message, NewsChannel, TextChannel, ThreadChannel } from "discord.js";
-
+import play from "play-dl";
 export class Commands {
     static async handle(message: Message) {
         if (message.author.bot) return;
@@ -77,11 +78,57 @@ export class Commands {
                     await message.reply("Não consegui mutar o usuário.");
                 }
                 break;
+            case "play":
+                const canalVoz = message.member?.voice.channel;
+                if (!canalVoz) {
+                    await message.reply("Você precisa estar em um canal de voz!");
+                    return;
+                }
+
+                const url = args[0];
+                if (!url || !play.yt_validate(url)) {
+                    await message.reply("Por favor, envie um link válido do YouTube.");
+                    return;
+                }
+
+                try {
+                    const stream = await play.stream(url);
+                    const resource = createAudioResource(stream.stream, {
+                        inputType: stream.type
+                    });
+
+                    const player = createAudioPlayer();
+                    player.play(resource);
+
+                    const connection = joinVoiceChannel({
+                        channelId: canalVoz.id,
+                        guildId: message.guild!.id,
+                        adapterCreator: message.guild!.voiceAdapterCreator,
+                    });
+
+                    connection.subscribe(player);
+
+                    await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+
+                    player.on(AudioPlayerStatus.Playing, () => {
+                        console.log("Tocando música agora.");
+                    });
+
+                    player.on(AudioPlayerStatus.Idle, () => {
+                        connection.destroy();
+                    });
+
+                    await message.reply("Tocando agora!");
+                } catch (err) {
+                    console.error("Erro ao tocar música:", err);
+                    await message.reply("Não consegui tocar a música.");
+                }
+                break;
             case "limpar":
                 const quantidade = parseInt(args[0]);
 
                 if (isNaN(quantidade) || quantidade < 1 || quantidade > 100) {
-                    await message.reply("❌ Use um número de 1 a 100. Ex: `!limpar 10`");
+                    await message.reply("Use um número de 1 a 100. Ex: `!limpar 10`");
                     return;
                 }
 
