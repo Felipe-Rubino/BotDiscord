@@ -3,7 +3,7 @@ import { Message, NewsChannel, TextChannel, ThreadChannel } from "discord.js";
 export class Commands {
     static async handle(message: Message) {
         if (message.author.bot) return;
-        if (!message.content.startsWith("!")) return; // só comandos com "!"
+        if (!message.content.startsWith("!")) return;
 
         const [comando, ...args] = message.content.slice(1).split(" ");
 
@@ -29,6 +29,54 @@ export class Commands {
             case "trabalho":
                 await message.reply("Já volto....... 🌾🌀");
                 break;
+            case "raio":
+                await message.reply("Opa gosto de raio ⚡ !")
+                break;
+            case "ban":
+                const usuario = message.mentions.users.first();
+                if (!usuario) {
+                    await message.reply("Você precisa mencionar um usuário para banir.");
+                    return;
+                }
+                const membro = message.guild?.members.cache.get(usuario.id);
+                if (!membro) {
+                    await message.reply("Usuário não encontrado no servidor.");
+                    return;
+                }
+                if (!membro.bannable) {
+                    await message.reply("Não posso banir esse usuário. Ele tem um cargo mais alto que o meu?");
+                    return;
+                }
+                try {
+                    await membro.ban({ reason: "Banido pelo bot." });
+                    await message.reply(`${usuario.tag} foi executado com sucesso!`);
+                }
+                catch (error) {
+                    console.error("Erro ao banir usuário:", error);
+                    await message.reply("Não consegui banir o usuário.");
+                }
+                break;
+            case "mutar":
+                const usuarioMute = message.mentions.users.first();
+                if (!usuarioMute) {
+                    await message.reply("Você precisa mencionar um usuário para mutar.");
+                    return;
+                }
+                const membroMute = message.guild?.members.cache.get(usuarioMute.id);
+                if (!membroMute?.manageable) {
+                    await message.reply("Não posso mutar esse usuário.");
+                    return;
+                }
+                try {
+                    const quantidade = parseInt(args[1]);
+                    const duracaoMs = quantidade * 60 * 1000;
+                    await membroMute.timeout(duracaoMs, "Mutado pelo bot.");
+                    await message.reply(`${usuarioMute.tag} foi mutado com sucesso!`);
+                } catch (error) {
+                    console.error("Erro ao mutar usuário:", error);
+                    await message.reply("Não consegui mutar o usuário.");
+                }
+                break;
             case "limpar":
                 const quantidade = parseInt(args[0]);
 
@@ -45,7 +93,7 @@ export class Commands {
                     canal instanceof ThreadChannel
                 ) {
                     try {
-                        await message.delete(); 
+                        await message.delete();
                         const apagadas = await canal.bulkDelete(quantidade, true);
                         const aviso = await canal.send(`${apagadas.size} mensagens apagadas!`);
                         setTimeout(() => aviso.delete(), 5000);
