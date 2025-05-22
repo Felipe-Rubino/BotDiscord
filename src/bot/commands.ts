@@ -14,7 +14,7 @@ export class Commands {
                 break;
 
             case "oi":
-                await message.reply("O seu viado!");
+                await message.reply("Olá!");
                 break;
             case "lucas":
                 await message.reply("eu tava zoando com voces");
@@ -31,7 +31,7 @@ export class Commands {
                 await message.reply("Já volto....... 🌾🌀");
                 break;
             case "raio":
-                await message.reply("Opa gosto de raio ⚡ !")
+                await message.reply("Opa gosto disso!")
                 break;
             case "ban":
                 const usuario = message.mentions.users.first();
